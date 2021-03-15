@@ -66,7 +66,7 @@ export const uploadToFilecoin = (payload) => async (dispatch) => {
       Data: {
         TransferType: "graphsync",
         Root: {
-          "/": result.path, //QmcA4aAra7FKqxT2zUQuvnrN5nxe8LSfcUugtxnxNYXah9
+          "/": result.path,
         },
         PieceCid: null,
         PieceSize: 0,
@@ -121,20 +121,23 @@ export const getStorageDealStatus = (payload) => async (dispatch) => {
   console.log({ dealInfo });
 };
 
-export const getAllStorageDealsStatus = () => async () => {
+export const getAllStorageDealsStatus = (payload) => async (dispatch) => {
   const nodeClient = getClient({ nodeNumber: 0, nodeOrMiner: "node" });
   const deals = await nodeClient.clientListDeals();
   console.log({ deals });
 };
 
-export const getDataFromFilecoinNetwork = (payload) => async () => {
+export const getDataFromFilecoinNetwork = (payload) => async (dispatch) => {
   const nodeClient = getClient({ nodeNumber: 0, nodeOrMiner: "node" });
+  window.nodeClient = nodeClient;
 
   // Check if the cid is available locally on the node or not
   const hasLocal = await nodeClient.clientHasLocal({ "/": payload.cid });
+  console.log({ hasLocal });
 
   // Fetch the retrieval offer from the lotus node
   const offers = await nodeClient.clientFindData({ "/": payload.cid });
+  console.log({ offers });
 
   const retrievalOffer = {
     Root: offers[0].Root,
@@ -147,15 +150,28 @@ export const getDataFromFilecoinNetwork = (payload) => async () => {
     MinerPeerID: offers[0].MinerPeerID,
   };
 
-  const error = await nodeClient.clientRetrieve(retrievalOffer, null);
-  if (!error) {
-    document.getElementById("fetchData").innerText =
-      "Data fetched Successfully";
-    window.open(`http://localhost:7070/ipfs/${payload.cid}`, "_blank");
-  } else {
-    document.getElementById("fetchData").innerText =
-      "Error while fetching data. Try again.";
-  }
+  // const ask = await nodeClient.clientQueryAsk(
+  //   "12D3KooWGzxzKZYveHXtpG6AsrUJBcWxHBFS2HsEoGTxrMLvKXtf",
+  //   "t01234"
+  // );
+
+  const randomId = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+
+  console.log({ retrievalOffer });
+  const fileRef = {
+    Path: `/home/vasa/Desktop/filecoin/lotus/${payload.cid}-${randomId}.txt`,
+    IsCAR: false,
+  };
+  console.log("clientRetrieve", retrievalOffer, fileRef);
+  const result = await nodeClient.clientRetrieve(retrievalOffer, fileRef);
+
+  console.log("Retrieve result", result);
+  console.log({
+    url:
+      `http://localhost:7777/` +
+      `0/testplan/downloads/` +
+      `${payload.cid}-${randomId}.txt`,
+  });
 };
 
 export const stateListMiners = () => async (dispatch) => {
