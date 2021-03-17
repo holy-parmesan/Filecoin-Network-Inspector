@@ -56,41 +56,6 @@ export const getWalletDetails = () => async (dispatch) => {
   });
 };
 
-export const uploadToFilecoin = (payload) => async (dispatch) => {
-  // Adding file to IPFS
-  const nodeClient = getClient({ nodeNumber: 0, nodeOrMiner: "node" });
-
-  for await (const result of ipfs.add(payload.fileBuffer)) {
-    // Creating a Storage Deal with a Miner
-    const dataRef = {
-      Data: {
-        TransferType: "graphsync",
-        Root: {
-          "/": result.path,
-        },
-        PieceCid: null,
-        PieceSize: 0,
-      },
-      Wallet: payload.defaultWalletAddress,
-      Miner: payload.targetMiner,
-      EpochPrice: payload.epochPrice,
-      MinBlocksDuration: 300,
-    };
-
-    const deal = await nodeClient.clientStartDeal(dataRef);
-
-    document.getElementById("uploadToFilecoin").innerText =
-      "Upload to Filecoin Network";
-
-    dispatch({
-      type: types.ADD_DATA_TO_FILECOIN,
-      payload: {
-        id: deal["/"],
-        cid: result.path,
-      },
-    });
-  }
-};
 export const getClientDeals = () => async (dispatch) => {
   const nodeClient = getClient({ nodeNumber: 0, nodeOrMiner: "node" });
   let clientDeals = await nodeClient.clientListDeals();
@@ -222,4 +187,40 @@ function dynamicsort(property, order) {
       return 0 * sort_order;
     }
   };
+}
+
+export const uploadToFilecoin = payload => async dispatch => {
+  // Adding file to IPFS
+  const nodeClient = getClient({ nodeNumber: 0, nodeOrMiner: 'node' })
+
+  for await (const result of ipfs.add(payload.fileBuffer)) {
+    // Creating a Storage Deal with a Miner
+    const dataRef = {
+      Data: {
+        TransferType: 'graphsync',
+        Root: {
+          '/': result.path
+        },
+        PieceCid: null,
+        PieceSize: 0
+      },
+      Wallet: payload.defaultWalletAddress,
+      Miner: payload.targetMiner,
+      EpochPrice: payload.epochPrice,
+      MinBlocksDuration: 300
+    }
+
+    const deal = await nodeClient.clientStartDeal(dataRef)
+
+    document.getElementById('uploadToFilecoin').innerText =
+      'Upload to Filecoin Network'
+
+    dispatch({
+      type: types.ADD_DATA_TO_FILECOIN,
+      payload: {
+        id: deal['/'],
+        cid: result.path
+      }
+    })
+  }
 }
